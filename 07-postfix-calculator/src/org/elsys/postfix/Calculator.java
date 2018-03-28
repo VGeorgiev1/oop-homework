@@ -8,13 +8,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
+import org.elsys.postfix.operations.CompositeOperation;
 import org.elsys.postfix.operations.Cosine;
 import org.elsys.postfix.operations.Divide;
 import org.elsys.postfix.operations.Duplicate;
 import org.elsys.postfix.operations.Minus;
+import org.elsys.postfix.operations.Multiplication;
 import org.elsys.postfix.operations.Negate;
 import org.elsys.postfix.operations.Operation;
 import org.elsys.postfix.operations.Sinus;
+import org.elsys.postfix.operations.Swap;
+import org.elsys.postfix.operations.Ternary;
+import org.elsys.postfix.operations.Rotate;
+
+
+
 import org.elsys.postfix.operations.Plus;
 
 public class Calculator {
@@ -37,6 +45,10 @@ public class Calculator {
 		addOperation(new Plus(this));
 		addOperation(new Minus(this));
 		addOperation(new Divide(this));
+		addOperation(new Multiplication(this));
+		addOperation(new Swap(this));
+		addOperation(new Rotate(this));
+		addOperation(new Ternary(this));
 	}
 
 	public void run() {
@@ -48,11 +60,35 @@ public class Calculator {
 				if (isDouble(input)) {
 					stack.add(Double.valueOf(input));
 				} else {
-					Operation operation = getOperation(input);
-					if (operation != null) {
-						operation.calculate();
-					} else {
-						throw new UnsupportedOperationException();
+					if(input.startsWith("\\") && !input.equals("\\*-\\*")){
+						CompositeOperation cop = new CompositeOperation(this, input.substring(1));
+						
+						while(true) {
+							String nextLine = scanner.next();
+							
+							if(nextLine.equals("def")) {
+								addOperation(cop);
+								break;
+							}
+							String[] tokens = nextLine.split("\\s+");
+							for(int i=0;i<tokens.length;i++) {
+								Operation op = getOperation(tokens[i]);
+								if(op!=null) {
+									cop.addOperation(op);
+								}else {
+									cop.addOperation(tokens[i]);
+								}
+								
+							}
+						
+						}
+					}else {
+						Operation operation = getOperation(input);
+						if (operation != null) {
+							operation.calculate();
+						} else {
+							throw new UnsupportedOperationException();
+						}
 					}
 				}
 			}

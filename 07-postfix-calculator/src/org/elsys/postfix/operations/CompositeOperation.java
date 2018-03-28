@@ -7,7 +7,7 @@ import org.elsys.postfix.Calculator;
 
 public class CompositeOperation extends AbstractOperation {
 
-	private List<Operation> operations = new ArrayList<Operation>();
+	private List<Object> operations = new ArrayList<Object>();
 	
 	public CompositeOperation(Calculator calculator, String token) {
 		super(calculator, token);
@@ -16,12 +16,22 @@ public class CompositeOperation extends AbstractOperation {
 
 	@Override
 	public void calculate() {
-		// TODO Auto-generated method stub
+		for(int i=0;i<operations.size();i++) {
+			if(operations.get(i) instanceof Operation) {
+				Operation op = (Operation)operations.get(i);
+				op.calculate();
+			}
+			else {
+				String numb = (String)operations.get(i);
+				
+				getCalculator().addValue(Double.valueOf(numb));
+			}
+		}
 		
 	}
 	
-	public void addOperation(Operation op) {
-		// TODO:
+	public void addOperation(Object op) {
+		operations.add(op);
 	}
 
 }

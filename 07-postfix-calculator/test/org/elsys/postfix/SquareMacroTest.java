@@ -9,11 +9,10 @@ public class SquareMacroTest extends CalculatorAbstractTest {
 		input("\\square");
 		input("dup");
 		input("*");
-		input("dev");
-		
+		input("def");
 		input("2");
 		input("square");
-		
+		inputCtrlC();
 		runCalculator();
 		assertCalculatorLastValue(4.0);
 	}

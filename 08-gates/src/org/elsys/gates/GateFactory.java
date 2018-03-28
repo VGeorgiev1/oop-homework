@@ -72,10 +72,23 @@ public abstract class GateFactory {
 		assert a.length == sum.length;
 		int count = a.length;
 		CompositeGate cg = new CompositeGate("SUPERCOOLRIPPLEGATE");
+		Wire couts[] = new Wire[a.length + 1];
+		for(int i=0;i < count + 1;i++) {
+			couts[i] = new Wire("Cout" + i);;
+		}
+		couts[0] = cIn;
+		couts[couts.length - 1] = cOut;
+		cg.addInput(couts[0]);
+		cg.addOutput(couts[couts.length -1]);
 		for(int i = 0; i < count; i++)
 		{
-			
-		}
-		return null;
+			Gate fa = makeFullAdder(a[i],b[i],couts[i],sum[i],couts[i+1]);
+			cg.addInput(a[i]);
+			cg.addInput(b[i]);
+			cg.addOutput(sum[i]);
+			cg.addGate(fa);
+		} 
+		
+		return cg;
 	}
 }
