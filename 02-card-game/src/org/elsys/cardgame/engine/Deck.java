@@ -33,7 +33,7 @@ public class Deck implements org.elsys.cardgame.api.Deck{
 	}
 	public Card topCard() {
 		Card c = this.cards.get(0);
-		//System.out.println(c.getRank().getSymbol() + c.getSuit().getSymbol());
+		System.out.println(c.getRank().getSymbol() + c.getSuit().getSymbol());
 		return c;
 	}
 	public Card drawBottomCard() {
@@ -42,7 +42,7 @@ public class Deck implements org.elsys.cardgame.api.Deck{
 	}
 	public Card bottomCard() {
 		Card c = this.cards.get(this.size - 1);
-		//System.out.println(c.getRank().getSymbol() + c.getSuit().getSymbol());
+		System.out.println(c.getRank().getSymbol() + c.getSuit().getSymbol());
 		return c;
 	}
 	public Hand deal() {
