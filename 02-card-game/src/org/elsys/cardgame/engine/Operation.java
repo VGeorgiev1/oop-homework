@@ -1,6 +1,6 @@
 package org.elsys.cardgame.engine;
 
-public abstract class Operation implements org.elsys.cardgame.api.Operation{
+public abstract class Operation  implements org.elsys.cardgame.api.Operation{
 	private String name;
 	
 	public Operation(String name){

@@ -8,7 +8,7 @@ public interface Game {
 	
 	void setDealtHand(Hand hand);
 
-	void process(String command);
+	Operation process(String command);
 
 	void addOperation(Operation operation);
 }

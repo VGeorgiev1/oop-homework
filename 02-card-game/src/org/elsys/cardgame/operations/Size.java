@@ -1,6 +1,6 @@
 package org.elsys.cardgame.operations;
 
-import org.elsys.cardgame.api.Deck;
+import org.elsys.cardgame.engine.Deck;
 import org.elsys.cardgame.engine.Operation;
 
 public class Size extends Operation{
@@ -9,9 +9,7 @@ public class Size extends Operation{
 		super("size");
 		this.deck = war;
 	}
-
-	
 	public void execute() {
-		System.out.println(this.deck.getCards().size());
+		System.out.println(this.deck.size());
 	}
 }

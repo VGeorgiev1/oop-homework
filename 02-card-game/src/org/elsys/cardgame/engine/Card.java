@@ -7,8 +7,8 @@ public class Card implements org.elsys.cardgame.api.Card{
 	private Rank rank;
 	private int score;
 	public Card(String c, int score) {
-		String suit = c.substring(c.length() - 1);
-		String rank = c.substring(0, c.length() - 1);
+		String suit = c.substring(0,1);
+		String rank = c.substring(1);
 		for (Suit a : Suit.values()) {
 		    if(a.getSymbol().equals(suit)) {
 		    	this.suit = a;
@@ -23,6 +23,9 @@ public class Card implements org.elsys.cardgame.api.Card{
 	}
 	public int getScore() {
 		return this.score;
+	}
+	public void setScore(int score) {
+		this.score = score;
 	}
 	public Suit getSuit() {
 		return this.suit;
