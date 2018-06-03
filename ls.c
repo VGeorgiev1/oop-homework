@@ -11,8 +11,21 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
+void print_type_of_file(struct stat st){
+	switch (st.st_mode & S_IFMT) {
+		 case S_IFBLK:  printf("b");break;
+		 case S_IFCHR:  printf("c");break;
+		 case S_IFDIR:  printf("d");break;
+		 case S_IFIFO:  printf("p");break;
+		 case S_IFLNK:  printf("l");break;
+		 case S_IFREG:  printf("-");break;
+		 case S_IFSOCK: printf("s");break;
+	}
+}
+
+
 void print_full_file(struct stat st, const char* name){
-    printf( (S_ISDIR(st.st_mode)) ? "d" : "-");
+    print_type_of_file(st);
     printf( (st.st_mode & S_IRUSR) ? "r" : "-");
     printf( (st.st_mode & S_IWUSR) ? "w" : "-");
     printf( (st.st_mode & S_IXUSR) ? "x" : "-");
@@ -26,41 +39,52 @@ void print_full_file(struct stat st, const char* name){
     struct tm *tm;
     char buf[200];  
     tm = localtime(&(st.st_mtime));
-    strftime(buf, sizeof(buf), "%b %d %H:%M", tm); 
-    printf(" %ld %-10s%-10s%6ld %s %s\n",
+    strftime(buf, sizeof(buf), "%b %-2d %H:%M", tm); 
+    printf(" %ld %+1s%+1s%5ld %s %s\n",
                 st.st_nlink, 
                 getpwuid(st.st_uid)->pw_name, 
                 getgrgid(st.st_gid)->gr_name, 
                 st.st_size,buf, 
                 name);
 }
-void ls( const char* dirname, int flags[], int argc){
+int ls( const char* dirname, int flags[], int argc){
     DIR *dir;
     int size = 10;
     struct dirent **dp = malloc(size * sizeof(struct dirent *));
+
     struct stat *st= malloc(size * sizeof(struct stat) );
+
     char a[200][100];
     if((dir=opendir(dirname)) == NULL){
         struct stat singel_st;
+		char err_msg[100];
         if(stat(dirname, &singel_st) == -1){
-            perror("Cant find such file or directory:"); 
-			return;   
-        }
+			snprintf(err_msg, sizeof(err_msg), "ls: cannot access %s", dirname);
+			perror(err_msg);
+			return -1;
+        }else if((singel_st.st_mode & S_IRUSR) == 0){
+			snprintf(err_msg, sizeof(err_msg), "ls: cannot open directory %s", dirname);
+			perror(err_msg);
+			return -1;
+		}
         if(flags[0] == 1){
             print_full_file(singel_st,dirname);
             
         }else{
-            printf( (S_ISDIR(singel_st.st_mode)) ? "d" : "-");
+    		print_type_of_file(singel_st);
             printf(" %s\n", dirname);
         }
     }else{
-		if(flags[1] == 1 || argc > 2){
+		if((flags[1] == 1 || argc > 2) ){
         	printf("%s:\n", dirname);
     	}
         int i=0;
         int index = 0;
         int blocks = 0;
         while(((dp[index] = readdir(dir))) != NULL){
+			if(strcmp(dp[index]->d_name,".") == 0 || strcmp(dp[index]->d_name,"..") == 0){
+					continue;				
+			}
             if(index == size){
                 size = size * 2;
                 dp = realloc(dp, size * sizeof(struct dirent *));
@@ -69,7 +93,10 @@ void ls( const char* dirname, int flags[], int argc){
             char name[200];
             snprintf(name, sizeof(name), "%s/%s", dirname, dp[index]->d_name);
             if(stat(&name, &st[index]) == -1){
-                perror(name);
+                char err_msg[100];
+				snprintf(err_msg, sizeof(err_msg), "ls: cannot access %s: ", name);
+				perror(err_msg);
+				return -1;
             }
             if(flags[2] == 0 && dp[index]->d_name[0] == '.'){
                 continue;
@@ -79,30 +106,21 @@ void ls( const char* dirname, int flags[], int argc){
             }
             index++;
         }
-        
+        if(flags[0] == 1){
+			printf("total: %d\n", blocks/2);
+		}
         for(int b = 0;b < index;b++){
-                if(S_ISDIR(st[b].st_mode) && strcmp(dp[b]->d_name,".") != 0 && strcmp(dp[b]->d_name,"..") != 0 && flags[1] == 1){
+                if(S_ISDIR(st[b].st_mode) && flags[1] == 1){
                     char path[1024]; 			
                     snprintf(path, sizeof(path), "%s/%s", dirname, dp[b]->d_name);
                     strcpy(a[i],path);
                     i++;
                 }
                 if(flags[0] == 1){
-                    if(b == 0){
-                        printf("total: %d\n", blocks/2);
-                    }
-                    if(flags[2] == 0 && dp[b]->d_name[0]== '.'){
-                        continue;
-                    }else{
-                        print_full_file(st[b], dp[b]->d_name);
-                    }
+                    print_full_file(st[b], dp[b]->d_name);
                 }else{
-                    if(flags[2] == 0 && dp[b]->d_name[0]== '.'){
-                        continue;
-                    }else{
-                        printf( (S_ISDIR(st[b].st_mode)) ? "d" : "-");
-                        printf(" %s\n", dp[b]->d_name);
-                    }
+					print_type_of_file(st[b]);
+                    printf(" %s\n", dp[b]->d_name); 
                 }
         }
 
@@ -110,10 +128,13 @@ void ls( const char* dirname, int flags[], int argc){
 		free(dp);
 		free(st);
 		for(int b=0;b<i;b++){        
+			printf("\n");
 			ls(a[b],flags, argc);
-		}	
-    }
+			
+		}
 
+    }
+	return 0;
 }
 int main(int argc, char** argv){
     int c;
@@ -123,26 +144,30 @@ int main(int argc, char** argv){
     int flags[3] = {0,0,0};
     int index;
     char fileName[40];
-	int opts = 0;
-    while ((c = getopt (argc, argv, "lraLRA")) != -1){
-		opts++;     
+    int opts = 0;
+    while ((c = getopt (argc, argv, "lraLRA")) != -1)
+	{     
 		if(c == 'l' || c=='L'){
-            flags[0] = 1;
+		    flags[0] = 1;
 			opts++; 
-        }else if(c == 'r' || c=='R'){
-            flags[1] = 1;
+		}else if(c == 'r' || c=='R'){
+		        flags[1] = 1;
 			opts++; 
-        }else if(c == 'a' || c== 'A'){
-            flags[2] = 1;
+		}else if(c == 'a' || c== 'A'){
+		        flags[2] = 1;
 			opts++; 
-        }
+		}
     }
 	
 	if(optind == argc){
 		ls(".", flags, 2);
 	}else{
      	for (index = optind; index < argc; index++){
-     	    ls (argv[index],flags, argc - opts);
+     	    
+			ls(argv[index],flags, argc - opts);
+			if(index < argc - 1){
+				printf("\n");
+			}
 		}
 	}
 }
